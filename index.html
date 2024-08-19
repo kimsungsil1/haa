@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>운동 추천 서비스</title>
+    <title>운동 추천 및 체중 기록 서비스</title>
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -33,7 +33,7 @@
             font-size: 24px;
         }
 
-        .question {
+        .question, .weight-input {
             margin-bottom: 20px;
         }
 
@@ -44,7 +44,7 @@
             margin-bottom: 10px;
         }
 
-        input[type="radio"] {
+        input[type="radio"], input[type="number"] {
             margin-right: 10px;
         }
 
@@ -71,12 +71,26 @@
             text-align: center;
             color: #2b8a3e;
         }
+
+        #weight-log {
+            margin-top: 20px;
+            color: #333;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>나에게 맞는 운동 찾기</h1>
+        <h1>운동 추천 및 체중 기록</h1>
         
+        <div class="weight-input">
+            <label for="weight">현재 체중(kg):</label>
+            <input type="number" id="weight" placeholder="체중을 입력하세요">
+            <button onclick="recordWeight()">체중 기록하기</button>
+        </div>
+
+        <div id="weight-log"></div>
+
         <div class="question">
             <label>목표는 무엇인가요?</label>
             <input type="radio" name="goal" value="체중 감량"> 체중 감량<br>
@@ -105,6 +119,29 @@
     </div>
 
     <script>
+        function recordWeight() {
+            const weight = document.getElementById('weight').value;
+            if (weight) {
+                let weightLog = JSON.parse(localStorage.getItem('weightLog')) || [];
+                const currentDate = new Date().toLocaleDateString('ko-KR');
+                weightLog.push({ date: currentDate, weight: weight });
+                localStorage.setItem('weightLog', JSON.stringify(weightLog));
+                displayWeightLog();
+                document.getElementById('weight').value = '';
+            }
+        }
+
+        function displayWeightLog() {
+            const weightLog = JSON.parse(localStorage.getItem('weightLog')) || [];
+            const weightLogDiv = document.getElementById('weight-log');
+            weightLogDiv.innerHTML = '<h3>체중 기록</h3>';
+            if (weightLog.length > 0) {
+                weightLogDiv.innerHTML += '<ul>' + weightLog.map(entry => `<li>${entry.date}: ${entry.weight}kg</li>`).join('') + '</ul>';
+            } else {
+                weightLogDiv.innerHTML += '<p>기록된 체중이 없습니다.</p>';
+            }
+        }
+
         function recommendExercise() {
             const goal = document.querySelector('input[name="goal"]:checked').value;
             const intensity = document.querySelector('input[name="intensity"]:checked').value;
@@ -144,6 +181,11 @@
 
             document.getElementById('result').textContent = '추천 운동: ' + recommendation;
         }
+
+        // 페이지 로드 시 체중 기록 표시
+        window.onload = function() {
+            displayWeightLog();
+        };
     </script>
 </body>
 </html>
