@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>운동 추천 서비스</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>나에게 맞는 운동 찾기</h1>
+    
+    <div class="question">
+        <label>목표는 무엇인가요?</label><br>
+        <input type="radio" name="goal" value="체중 감량"> 체중 감량<br>
+        <input type="radio" name="goal" value="근력 증가"> 근력 증가<br>
+        <input type="radio" name="goal" value="유연성 향상"> 유연성 향상<br>
+        <input type="radio" name="goal" value="심폐 지구력 향상"> 심폐 지구력 향상
+    </div>
+    
+    <div class="question">
+        <label>선호하는 운동 강도는 무엇인가요?</label><br>
+        <input type="radio" name="intensity" value="낮음"> 낮음 (예: 요가, 걷기)<br>
+        <input type="radio" name="intensity" value="중간"> 중간 (예: 조깅, 수영)<br>
+        <input type="radio" name="intensity" value="높음"> 높음 (예: HIIT, 크로스핏)
+    </div>
+    
+    <div class="question">
+        <label>운동 시간은 얼마나 투자할 수 있나요?</label><br>
+        <input type="radio" name="time" value="15분 이하"> 15분 이하<br>
+        <input type="radio" name="time" value="15~30분"> 15~30분<br>
+        <input type="radio" name="time" value="30분 이상"> 30분 이상
+    </div>
+    
+    <button onclick="recommendExercise()">운동 추천받기</button>
+    
+    <div id="result"></div>
+
+    <script>
+        function recommendExercise() {
+            const goal = document.querySelector('input[name="goal"]:checked').value;
+            const intensity = document.querySelector('input[name="intensity"]:checked').value;
+            const time = document.querySelector('input[name="time"]:checked').value;
+            
+            let recommendation = '';
+
+            if (goal === '체중 감량') {
+                if (intensity === '낮음') {
+                    recommendation = '걷기';
+                } else if (intensity === '중간') {
+                    recommendation = '조깅';
+                } else {
+                    recommendation = 'HIIT';
+                }
+            } else if (goal === '근력 증가') {
+                if (intensity === '낮음') {
+                    recommendation = '요가';
+                } else if (intensity === '중간') {
+                    recommendation = '웨이트 트레이닝';
+                } else {
+                    recommendation = '크로스핏';
+                }
+            } else if (goal === '유연성 향상') {
+                if (intensity === '낮음') {
+                    recommendation = '스트레칭';
+                } else {
+                    recommendation = '필라테스';
+                }
+            } else if (goal === '심폐 지구력 향상') {
+                if (intensity === '중간') {
+                    recommendation = '수영';
+                } else {
+                    recommendation = '달리기';
+                }
+            }
+
+            document.getElementById('result').textContent = '추천 운동: ' + recommendation;
+        }
+    </script>
+</body>
+</html>
