@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>운동 추천 및 체중 기록 서비스</title>
+    <title>운동 추천 및 체중 관리 서비스</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -15,6 +16,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            flex-direction: column;
         }
 
         .container {
@@ -24,6 +26,7 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             max-width: 400px;
             width: 100%;
+            margin-bottom: 20px;
         }
 
         h1 {
@@ -58,6 +61,7 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
 
         button:hover {
@@ -77,11 +81,29 @@
             color: #333;
             text-align: center;
         }
+
+        #timer {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #d9534f;
+            text-align: center;
+        }
+
+        #goal-info {
+            margin-top: 20px;
+            font-size: 16px;
+            text-align: center;
+            color: #555;
+        }
+
+        canvas {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>운동 추천 및 체중 기록</h1>
+        <h1>운동 추천 및 체중 관리</h1>
         
         <div class="weight-input">
             <label for="weight">현재 체중(kg):</label>
@@ -90,6 +112,14 @@
         </div>
 
         <div id="weight-log"></div>
+
+        <div class="weight-input">
+            <label for="goal-weight">목표 체중(kg):</label>
+            <input type="number" id="goal-weight" placeholder="목표 체중을 입력하세요">
+            <button onclick="setGoalWeight()">목표 설정하기</button>
+        </div>
+
+        <div id="goal-info"></div>
 
         <div class="question">
             <label>목표는 무엇인가요?</label>
@@ -116,9 +146,19 @@
         <button onclick="recommendExercise()">운동 추천받기</button>
         
         <div id="result"></div>
+
+        <div id="timer-container" style="display:none;">
+            <label for="exercise-time">운동 시간 설정(분):</label>
+            <input type="number" id="exercise-time" min="1" placeholder="운동 시간을 입력하세요">
+            <button onclick="startTimer()">타이머 시작</button>
+            <div id="timer"></div>
+        </div>
+
+        <canvas id="weightChart" width="400" height="200"></canvas>
     </div>
 
     <script>
+        // 체중 기록 함수
         function recordWeight() {
             const weight = document.getElementById('weight').value;
             if (weight) {
@@ -131,17 +171,100 @@
             }
         }
 
+        // 체중 기록 표시 함수
         function displayWeightLog() {
             const weightLog = JSON.parse(localStorage.getItem('weightLog')) || [];
             const weightLogDiv = document.getElementById('weight-log');
             weightLogDiv.innerHTML = '<h3>체중 기록</h3>';
             if (weightLog.length > 0) {
                 weightLogDiv.innerHTML += '<ul>' + weightLog.map(entry => `<li>${entry.date}: ${entry.weight}kg</li>`).join('') + '</ul>';
+                drawWeightChart(weightLog);
             } else {
                 weightLogDiv.innerHTML += '<p>기록된 체중이 없습니다.</p>';
             }
         }
 
+        // 목표 체중 설정 함수
+        function setGoalWeight() {
+            const goalWeight = document.getElementById('goal-weight').value;
+            if (goalWeight) {
+                localStorage.setItem('goalWeight', goalWeight);
+                displayGoalInfo();
+            }
+        }
+
+        // 목표 체중 정보 표시 함수
+        function displayGoalInfo() {
+            const goalWeight = localStorage.getItem('goalWeight');
+            const weightLog = JSON.parse(localStorage.getItem('weightLog')) || [];
+            if (goalWeight && weightLog.length > 0) {
+                const latestWeight = weightLog[weightLog.length - 1].weight;
+                const progress = (latestWeight - goalWeight).toFixed(1);
+                const goalInfoDiv = document.getElementById('goal-info');
+                goalInfoDiv.textContent = `목표 체중: ${goalWeight}kg | 현재 체중: ${latestWeight}kg | 목표까지: ${Math.abs(progress)}kg ${progress >= 0 ? '남음' : '초과'}`;
+            }
+        }
+
+        // 타이머 시작 함수
+        function startTimer() {
+            const exerciseTime = document.getElementById('exercise-time').value;
+            const timerDiv = document.getElementById('timer');
+            let timeRemaining = exerciseTime * 60;
+
+            const interval = setInterval(() => {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerDiv.textContent = `남은 시간: ${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(interval);
+                    timerDiv.textContent = '운동 완료!';
+                }
+
+                timeRemaining--;
+            }, 1000);
+        }
+
+        // 체중 변화 그래프 그리기 함수
+        function drawWeightChart(weightLog) {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            const labels = weightLog.map(entry => entry.date);
+            const data = weightLog.map(entry => entry.weight);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '체중 변화',
+                        data: data,
+                        borderColor: '#2b8a3e',
+                        backgroundColor: 'rgba(43, 138, 62, 0.1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '날짜'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '체중 (kg)'
+                            },
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 운동 추천 함수
         function recommendExercise() {
             const goal = document.querySelector('input[name="goal"]:checked').value;
             const intensity = document.querySelector('input[name="intensity"]:checked').value;
@@ -180,11 +303,13 @@
             }
 
             document.getElementById('result').textContent = '추천 운동: ' + recommendation;
+            document.getElementById('timer-container').style.display = 'block';
         }
 
-        // 페이지 로드 시 체중 기록 표시
+        // 페이지 로드 시 초기 데이터 표시
         window.onload = function() {
             displayWeightLog();
+            displayGoalInfo();
         };
     </script>
 </body>
